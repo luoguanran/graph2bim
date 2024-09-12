@@ -1,0 +1,17 @@
+from Autodesk.Revit.DB import FilteredElementCollector, Wall, XYZ, LocationCurve
+
+# 获取当前文档
+doc = __revit__.ActiveUIDocument.Document
+
+# 获取所有墙元素
+walls = FilteredElementCollector(doc).OfClass(Wall).ToElements()
+
+# 遍历所有墙元素
+for wall in walls:
+    # 获取墙的曲线位置
+    location_curve = wall.Location
+    if isinstance(location_curve, LocationCurve):
+        curve = location_curve.Curve
+        # 计算中点
+        midpoint = curve.Evaluate(0.5, True)
+        print(f'Wall ID: {wall.Id}, Midpoint: {midpoint}')

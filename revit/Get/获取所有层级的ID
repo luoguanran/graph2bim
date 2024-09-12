@@ -1,0 +1,25 @@
+"""
+获取所有层级的ID
+
+参数:
+-
+
+返回:
+- ElementIdList, 层级的ID列表。
+"""
+
+import clr
+clr.AddReference('RevitAPI')
+clr.AddReference('RevitAPIUI')
+clr.AddReference("System")
+# 导入
+from Autodesk.Revit.UI import *
+from Autodesk.Revit.DB import *
+
+# 使用FilteredElementCollector收集所有Level元素
+levels = FilteredElementCollector(doc).OfClass(Level).ToElements()
+# 遍历所有Level元素，查找匹配名称的层级
+level_id = []
+for level in levels:
+    level_id.append(level.Id)
+return level_id

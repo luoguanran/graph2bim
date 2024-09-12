@@ -1,0 +1,22 @@
+import clr
+clr.AddReference('RevitAPI')
+clr.AddReference('RevitServices')
+from Autodesk.Revit.DB import *
+from RevitServices.Persistence import DocumentManager
+
+# 获取当前文档
+doc = __revit__.ActiveUIDocument.Document
+
+# 获取所有族实例
+collector = FilteredElementCollector(doc).OfClass(FamilyInstance)
+
+# 列出所有族实例的信息
+family_instances = []
+
+for fi in collector:
+    family_name = fi.Symbol.Family.Name
+    type_name = fi.Name
+    instance_id = fi.Id
+    family_instances.append((family_name, type_name, instance_id))
+
+print(family_instances)

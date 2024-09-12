@@ -1,0 +1,14 @@
+标高是有限的水平平面，作为基于标高的图元 （如墙、屋顶、楼板和天花板） 的参照。
+要检索项目中所有的标高，使用Elementterator 迭代器来搜索Level 对象。
+import Autodesk
+from Autodesk.Revit.DB import *
+doc = __revit__.ActiveUIDocument.Document
+
+t = Transaction(doc, '创建标高')
+t.Start()
+level_1 = Level.Create(doc, 3000/304.8)
+
+
+level_1_name = level_1.get_Parameter(BuiltInParameter.DATUM_TEXT)
+level_1_name.Set('F1')
+t.Commit()

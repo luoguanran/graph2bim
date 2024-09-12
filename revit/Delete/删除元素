@@ -1,0 +1,31 @@
+1、如果这是Revit类别的元素，请在 BuiltInCategory 枚举中找到等效的 BuiltInCategory 类型。
+2、否则，如果您正在寻找特定API类的元素，则可以使用 .OfClass() 过滤器，并在 Class 名称中添加一个参数类别。
+3、如果需要实例，使用 .WhereElementIsNotElementType() 过滤器
+4、如果需要类型，使用 .WhereElementIsElementType() 过滤器
+5、如果两者都想要，则不要使用过滤器
+
+
+# 删除基本屋顶
+from Autodesk.Revit.DB import *
+from Autodesk.Revit.UI import *
+
+# 获取当前文档
+doc = __revit__.ActiveUIDocument.Document
+
+# 收集所有基本屋顶
+basic_roofs = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Roofs).WhereElementIsNotElementType().ToElements()
+
+# 开始事务
+t = Transaction(doc, '删除基本屋顶')
+t.Start()
+
+try:
+    # 删除所有找到的基本屋顶
+    for roof in basic_roofs:
+        doc.Delete(roof.Id)
+
+    t.Commit()
+    TaskDialog.Show("完成", "所有基本屋顶已被删除")
+except Exception as e:
+    t.RollBack()
+    TaskDialog.Show("错误", str(e))

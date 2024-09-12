@@ -1,0 +1,26 @@
+"""
+根据层级的名称获取层级的ID
+
+参数:
+- level_name: str, 标高/层高的名称。
+
+返回:
+- ElementId, 层级的ID，如果未找到则返回None。
+"""
+
+import clr
+clr.AddReference('RevitAPI')
+clr.AddReference('RevitAPIUI')
+clr.AddReference("System")
+# 导入
+from Autodesk.Revit.UI import *
+from Autodesk.Revit.DB import *
+
+# 使用FilteredElementCollector收集所有Level元素
+levels = FilteredElementCollector(doc).OfClass(Level).ToElements()
+
+# 遍历所有Level元素，查找匹配名称的层级
+for level in levels:
+    if level.Name == level_name:
+        return level.Id
+return None

@@ -1,0 +1,51 @@
+import clr
+clr.AddReference('RevitAPI')
+clr.AddReference('RevitAPIUI')
+clr.AddReference("System")
+# 导入
+from Autodesk.Revit.UI import *
+from Autodesk.Revit.DB import *
+## 2.实例当前程序变量（可忽略）
+uidoc = __revit__.ActiveUIDocument
+uiapp = __revit__.Application
+
+# 当前文档
+doc = uidoc .Document
+
+# 在文档中找到树的族
+create_element_name = "RPC Tree - Conifer"  # 替换为你实际的树族名称
+
+# 获取所有族实例
+collector = FilteredElementCollector(doc).OfClass(FamilyInstance)
+
+try:
+    element_type = None
+    for ft in collector:
+        if ft.Name == create_element_name:
+            element_type = doc.GetElement(ft)
+
+    if element_type:
+
+        location_point = XYZ(-5.62155343441, -39.3592602930, -1.95039182286)# 替换为前院的实际坐标
+        # 开始事务
+        t = Transaction(doc, "create elements")
+        t.Start()
+
+        # 如果族类型未激活，先激活它
+        if not element_type.IsActive:
+            element_type.Activate()
+            doc.Regenerate()
+
+        # 在前院指定位置创建树实例
+        new_tree = doc.Create.NewFamilyInstance(location_point, element_type, Structure.StructuralType.NonStructural)
+
+        # 提交事务
+        t.Commit()
+        TaskDialog.Show("success", "instances have been created")
+    else:
+        TaskDialog.Show("error", "instances don't exist")
+except Exception as e:
+    if t.HasStarted():
+        t.RollBack()
+    TaskDialog.Show("error", str(e))
+

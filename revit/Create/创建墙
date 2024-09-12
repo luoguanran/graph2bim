@@ -1,0 +1,68 @@
+"""
+在指定层级上创建一面墙
+
+参数:
+- st_pt: tuple, 墙的起点2D坐标 (x, y)。
+- ed_pt: tuple, 墙的终点2D坐标 (x, y)。
+- layer_id: str, 创建墙所在层的名称。
+
+返回:
+- str, 新创建墙的UUID。
+"""
+
+import Autodesk
+from Autodesk.Revit.DB import *
+
+doc = __revit__.ActiveUIDocument.Document
+
+
+
+
+
+
+# 查找指定UUID的层级
+layer_element = doc.GetElement(layer_uuid)
+if not isinstance(layer_element, Level):
+    print("指定的UUID不属于一个有效的层级。")
+    return None
+
+# 创建墙的起点和终点的XYZ坐标
+start_point = XYZ(st_pt[0], st_pt[1], 0)
+end_point = XYZ(ed_pt[0], ed_pt[1], 0)
+
+# 创建墙体线段
+wall_line = Line.CreateBound(start_point, end_point)
+
+# 默认墙的底部和顶部高度
+bottom_elevation = 0  # 相对于该层级的底部高度
+top_elevation = 3000 / 304.8  # 3000毫米转化为英尺（Revit默认单位为英尺）
+
+# 开启事务来创建墙
+with Transaction(doc, "Create Wall") as t:
+        t.Start()
+
+        # 创建墙体
+        new_wall = Wall.Create(doc, wall_line, layer_element.Id, False)
+
+        # 设置墙体的底部和顶部高度
+        base_offset_param = new_wall.get_Parameter(BuiltInParameter.WALL_BASE_OFFSET)
+        base_offset_param.Set(bottom_elevation)
+
+        top_offset_param = new_wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE)
+        unconnected_height_param = new_wall.get_Parameter(BuiltInParameter.WALL_USER_HEIGHT_PARAM)
+
+        if top_offset_param.AsElementId() == ElementId.InvalidElementId:
+            unconnected_height_param.Set(top_elevation)
+
+        t.Commit()
+
+    # 返回新创建墙的UUID
+    wall_uuid = new_wall.UniqueId
+    return wall_uuid
+
+# 示例用法：
+st_pt = (0, 0)  # 起点坐标 (x, y)
+ed_pt = (10, 0)  # 终点坐标 (x, y)
+level_id = get_level_id()[1]
+new_wall_uuid = create_wall(st_pt, ed_pt, level_id)
+print("UUID:"+str(new_wall_uuid))

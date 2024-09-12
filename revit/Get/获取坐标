@@ -1,0 +1,30 @@
+import clr
+clr.AddReference('RevitAPI')
+clr.AddReference('RevitAPIUI')
+clr.AddReference("System")
+# 导入
+from Autodesk.Revit.UI import *
+from Autodesk.Revit.DB import *
+## 2.实例当前程序变量（可忽略）
+uidoc = __revit__.ActiveUIDocument
+uiapp = __revit__.Application
+
+# 当前文档
+doc = uidoc .Document
+
+# 找到 RPC Tree - Conifer 族的 Douglas Fir - 20' 类型
+type_name = "Scarlet Oak - 42'"
+
+# 使用 FilteredElementCollector 搜索所有的族实例
+collector = FilteredElementCollector(doc).OfClass(FamilyInstance)
+
+# 过滤出目标族和类型的实例
+for tree in collector:
+    if tree.Name == type_name:
+        # 获取实例的位置信息
+        tree_location = tree.Location
+        if isinstance(tree_location, LocationPoint):
+            tree_point = tree_location.Point
+            print("Tree '" + type_name + "' is located at: X=" + str(tree_point.X) + ", Y=" + str(tree_point.Y) + ", Z=" + str(tree_point.Z))
+        else:
+            print("Tree '" + type_name + "' does not have a valid point location.")

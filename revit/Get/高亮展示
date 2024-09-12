@@ -1,0 +1,39 @@
+# Import necessary Revit API modules and clr for .NET interoperability
+from Autodesk.Revit.DB import *
+from Autodesk.Revit.UI import *
+import clr
+
+# Import List from System.Collections.Generic
+clr.AddReference('System')
+from System.Collections.Generic import List
+
+# Get the current Revit document and UIDocument
+uidoc = __revit__.ActiveUIDocument
+doc = uidoc.Document
+
+# Create a collector to find all elements in the project
+collector = FilteredElementCollector(doc)
+
+# Apply a filter to only get window elements
+element_filter = ElementCategoryFilter(BuiltInCategory.OST_Windows)
+
+# Collect all window instances
+elements = window_collector.WherePasses(element_filter).WhereElementIsNotElementType().ToElements()
+
+# Prepare a list to hold the element IDs of the windows
+element_ids = List[ElementId]()
+
+for element in elements:
+    element_ids.Add(element.Id)
+
+# If elements are found, select and highlight them
+if element_ids.Count > 0:
+    uidoc.Selection.SetElementIds(element_ids)
+    TaskDialog.Show("Element Finder", "Found and selected {} element instances.".format(element_ids.Count))
+else:
+    TaskDialog.Show("Element Finder", "No element instances found.")
+
+# Optionally, print the IDs and names of the windows
+instance_info = ""
+for element in elements:
+    instance_info += "ID: {}, Name: {}\n".format(element.Id, element.Name)

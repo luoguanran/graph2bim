@@ -1,0 +1,64 @@
+from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, ElementCategoryFilter, ElementId, Transaction, FamilySymbol, BuiltInParameter
+from Autodesk.Revit.UI import TaskDialog
+import clr
+
+clr.AddReference('System')
+from System.Collections.Generic import List
+
+# 获取当前的 Revit 文档和 UIDocument
+uidoc = __revit__.ActiveUIDocument
+doc = uidoc.Document
+
+# 创建一个 collector 来查找项目中的所有窗实例
+collector = FilteredElementCollector(doc)
+window_filter = ElementCategoryFilter(BuiltInCategory.OST_Windows)
+windows = collector.WherePasses(window_filter).WhereElementIsNotElementType().ToElements()
+
+# 开启事务 (Transaction)
+with Transaction(doc, "Modify Window Properties") as t:
+    t.Start()
+
+    for window in windows:
+        # 示例1：修改窗实例的高度和宽度参数
+        # 请注意，这些参数的名称可能根据你使用的 Revit 版本或族而不同
+        height_param = window.LookupParameter("Height")
+        width_param = window.LookupParameter("Width")
+
+        if height_param and width_param:
+            height_param.Set(1500)  # 将高度设置为1500mm
+            width_param.Set(1200)   # 将宽度设置为1200mm
+
+        # 示例2：修改窗实例的材质参数
+        material_param = window.LookupParameter("Material")
+        if material_param:
+            # 需要先获取材质ID，以下仅为示例，你需要根据实际情况设置
+            material_id = ElementId(123456)  # 假设材质的ID为123456
+            material_param.Set(material_id)
+
+        # 示例3：将窗实例替换为另一种窗户类型
+        # 需要找到目标窗户类型的 FamilySymbol
+        new_window_type_name = "New Window Type"  # 目标窗户类型的名称
+        new_window_type = None
+        for ft in FilteredElementCollector(doc).OfClass(FamilySymbol).OfCategory(BuiltInCategory.OST_Windows):
+            if ft.Name == new_window_type_name:
+                new_window_type = ft
+                break
+
+        if new_window_type and not window.Symbol.IsActive:
+            new_window_type.Activate()  # 激活目标窗户类型
+
+        if new_window_type:
+            window.Symbol = new_window_type  # 替换窗实例的类型
+
+        # 获取窗户实例的名称（使用 FamilySymbol 的 Name 属性）
+        window_name = window.Symbol.Family.Name
+
+        # 收集信息用于输出
+        instance_info = 'ID: ' + str(window.Id) + ', Name: ' + window_name + '\n'
+        print(instance_info)
+
+    t.Commit()
+
+# 显示操作结果
+TaskDialog.Show("Window Modifier", "Modified {} windows.".format(len(windows)))
+

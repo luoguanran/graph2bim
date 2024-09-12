@@ -1,0 +1,131 @@
+1.从族库中载入指定名称的柱
+
+import Autodesk
+from Autodesk.Revit.DB import *
+doc = __revit__.ActiveUIDocument.Document
+
+columns = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_StructuralColumns).WhereElementIsElementType().ToElements()
+levels = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Levels).WhereElementIsNotElementType().ToElements()
+
+for level in levels:
+	elevation = level.get_Parameter(BuiltInParameter.LEVEL_ELEV).AsDouble()
+	if elevation == 3000/304.8:
+		level_0 = level
+for column in columns:
+	column_name = column.get_Parameter(BuiltInParameter.SYMBOL_NAME_PARAM).AsString()
+	if column_name == 'HW400x400x13x21':
+		column_type = column
+
+t = Transaction(doc, '创建结构柱')
+t.Start()
+column_type.Activate()
+col = doc.Create.NewFamilyInstance(XYZ(0,0,level_0.Elevation), column_type, level_0, Structure.StructuralType.Column)
+top_offset = col.get_Parameter(BuiltInParameter.FAMILY_TOP_LEVEL_OFFSET_PARAM)
+top_offset.Set(3000/304.8)
+t.Commit()
+
+2.1.从族库中载入柱，如果没有则选择族库中第一种柱，默认将该柱放在第一个标高平面
+# Import the necessary Revit API modules
+from Autodesk.Revit.DB import FilteredElementCollector, BuiltInCategory, FamilySymbol, Transaction, XYZ
+from Autodesk.Revit.UI import TaskDialog
+
+# Get the current Revit document
+doc = __revit__.ActiveUIDocument.Document
+
+# Function to find a column family symbol
+def get_column_family_symbol(doc):
+    collector = FilteredElementCollector(doc)
+    collector.OfCategory(BuiltInCategory.OST_Columns)
+    collector.OfClass(FamilySymbol)
+    column_symbols = collector.ToElements()
+    if column_symbols:
+        return column_symbols[0]  # Return the first column family symbol found
+    else:
+        return None
+
+# Main function to create a column
+def create_column(doc, location, height):
+    # Find a column family symbol
+    column_symbol = get_column_family_symbol(doc)
+
+    if column_symbol is None:
+        TaskDialog.Show("Error", "No column family symbol found.")
+        return
+
+    # Start a transaction
+    t = Transaction(doc, "Create Column")
+    t.Start()
+
+    # Ensure the family symbol is active
+    if not column_symbol.IsActive:
+        column_symbol.Activate()
+        doc.Regenerate()
+
+    # Define the base and top points of the column
+    base_point = XYZ(location[0], location[1], location[2])
+    top_point = XYZ(location[0], location[1], location[2] + height)
+
+    # Create the column
+    new_column = doc.Create.NewFamilyInstance(base_point, column_symbol, None, Autodesk.Revit.DB.Structure.StructuralType.Column)
+    new_column.get_Parameter(Autodesk.Revit.DB.BuiltInParameter.FAMILY_TOP_LEVEL_PARAM).Set(top_point)
+
+    # Commit the transaction
+    t.Commit()
+
+# Define the location and height for the column
+column_location = [0, 0, 0]  # Example location (x, y, z)
+column_height = 10.0  # Example height in feet (adjust as necessary)
+
+# Call the function to create a column
+create_column(doc, column_location, column_height)
+
+
+2.创建一个矩形柱
+from Autodesk.Revit.DB import Transaction, XYZ, Line, CurveLoop, DirectShape, BuiltInCategory, SolidOptions, GeometryCreationUtilities, ElementId
+
+# 获取当前Revit文档
+doc = __revit__.ActiveUIDocument.Document
+
+# 创建矩形柱的函数
+def create_custom_column(doc, base_point, length, width, height):
+    # 开始事务
+    t = Transaction(doc, "Create Custom Column")
+    t.Start()
+
+    # 定义底部矩形的四个角点
+    pt1 = XYZ(base_point.X, base_point.Y, base_point.Z)
+    pt2 = XYZ(base_point.X + length, base_point.Y, base_point.Z)
+    pt3 = XYZ(base_point.X + length, base_point.Y + width, base_point.Z)
+    pt4 = XYZ(base_point.X, base_point.Y + width, base_point.Z)
+
+    # 创建定义底部矩形的线
+    line1 = Line.CreateBound(pt1, pt2)
+    line2 = Line.CreateBound(pt2, pt3)
+    line3 = Line.CreateBound(pt3, pt4)
+    line4 = Line.CreateBound(pt4, pt1)
+
+    # 创建一个CurveLoop并添加线条
+    base_loop = CurveLoop()
+    base_loop.Append(line1)
+    base_loop.Append(line2)
+    base_loop.Append(line3)
+    base_loop.Append(line4)
+
+    # 使用GeometryCreationUtilities创建Solid
+    solid = GeometryCreationUtilities.CreateExtrusionGeometry([base_loop], XYZ.BasisZ, height)
+
+    # 使用DirectShape创建元素并将Solid添加到Revit文档中
+    direct_shape = DirectShape.CreateElement(doc, ElementId(BuiltInCategory.OST_StructuralColumns))
+    direct_shape.SetShape([solid])
+
+    # 提交事务
+    t.Commit()
+
+# 定义柱的基点、长度、宽度和高度
+base_point = XYZ(0, 0, 0)  # 示例基点
+length = 5.0  # 示例长度（单位：英尺）
+width = 5.0  # 示例宽度（单位：英尺）
+height = 10.0  # 示例高度（单位：英尺）
+
+# 调用函数创建自定义柱
+create_custom_column(doc, base_point, length, width, height)

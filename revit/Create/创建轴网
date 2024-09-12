@@ -1,0 +1,19 @@
+import Autodesk
+from Autodesk.Revit.DB import *
+
+# 获取当前文档
+doc = __revit__.ActiveUIDocument.Document
+
+# 1.创建定位线
+start_point = XYZ(0,0,0)
+end_point = XYZ(50,0,0)
+line = Line.CreateBound(start_point, end_point)
+
+# 2.开启事务 创建轴网
+t = Transaction(doc, "创建轴网")
+t.Start()
+grid = Grid.Create(doc, line)
+# 3.设置轴网名称
+g_name = grid.get_Parameter(BuiltInParameter.DATUM_TEXT)
+g_name.Set("1")
+t.Commit()

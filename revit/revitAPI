@@ -1,0 +1,25 @@
+Revit将族分为系统族、内建族、标准构件族。
+系统族：系统族是在 Autodesk Revit 中预定义的族，包含基本建筑构件，例如墙、窗和门。例如：基本墙系统族包含定义内墙、外墙、基础墙、常规墙和隔断墙样式的墙类型；可以复制和修改现有系统族，但不能创建新系统族；可以通过指定新参数定义新的族类型。
+标准构件族：在默认情况下，在项目样板中载入标准构件族，但更多标准构件族存储在构件库中。使用族编辑器创建和修改构件。可以复制和修改现有构件族， 也可以根据各种族样板创建新的构件族。族样板可以是基于主体的样板， 也可以是独立的样板。基于主体的族包括需要主体的构件。例如：以墙族为主体的门族，独立族包括柱、树和家具；族样板有助于创建和操作构件族。标准构件族可以位于项目环境外，且具有 .rfa 扩展名，可以将它们载入项目，从一个项目传递到另一个项目，而且如果需要还可以从项目文件保存到您的库中。
+内建族：内建族可以是特定项目中的模型构件，也可以是注释构件。只能在当前项目中创建内建族，因此它们仅可用于该项目特定的对象，例如：自定义墙的处理。创建内建族时，可以选择类别，且您使用的类别将决定构件在项目中的外观和显示控制。
+
+
+原文链接：https://blog.csdn.net/weixin_44037272/article/details/126479319
+
+墙
+public static Wall Create(
+	Document document,
+	IList<Curve> profile,
+	bool structural
+)
+
+Parameters
+document
+Type: Autodesk.Revit.DB Document
+The document in which the new wall is created.
+profile
+Type: System.Collections.Generic IList Curve
+An array of planar curves that represent the vertical profile of the wall.
+structural
+Type: System Boolean
+If set, specifies that the wall is structural in nature.
